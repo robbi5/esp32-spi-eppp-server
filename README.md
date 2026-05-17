@@ -6,16 +6,16 @@ gateway using Espressif's
 component.
 
 The device acts as an SPI slave and EPPP server — it waits for an SPI master
-to connect, then provides that host with NAT-ed IP connectivity over a PPP
-link. Any ESP32 with SPI can serve as the host; it only needs to call
+to connect, then provides that host with NAT-ed IP connectivity over an EPPP
+tunnel. Any ESP32 with SPI can serve as the host; it only needs to call
 `eppp_connect()` to obtain a fully functional network interface.
 
 ## How it works
 
 1. The server connects to a WiFi access point as a station.
 2. It starts an EPPP SPI slave and waits for a host (SPI master) to connect.
-3. Once connected, a PPP link is established over SPI and IP traffic is
-   forwarded between the PPP interface and WiFi using lwIP NAT (NAPT).
+3. Once connected, an IP tunnel is established over SPI and traffic is
+   forwarded between the EPPP interface and WiFi using lwIP NAT (NAPT).
 
 ## Building
 
