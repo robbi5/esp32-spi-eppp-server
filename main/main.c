@@ -79,6 +79,13 @@ static void wifi_init_sta(void)
     ESP_LOGI(TAG, "WiFi connected");
 }
 
+static void eppp_perform_task(void *arg)
+{
+    esp_netif_t *netif = (esp_netif_t *)arg;
+    while (eppp_perform(netif) != ESP_ERR_TIMEOUT) {}
+    vTaskDelete(NULL);
+}
+
 static void eppp_server_status_task(void *arg)
 {
     esp_netif_t *eppp_netif = (esp_netif_t *)arg;
@@ -146,7 +153,7 @@ void app_main(void)
     /* Connect to WiFi first */
     wifi_init_sta();
 
-    /* Start EPPP server (SPI slave) */
+    /* Start EPPP server (SPI slave), non-blocking */
     eppp_config_t config = EPPP_DEFAULT_SERVER_CONFIG();
     config.transport = EPPP_TRANSPORT_SPI;
     config.spi.is_master = false;
@@ -156,18 +163,24 @@ void app_main(void)
     config.spi.sclk = CONFIG_SPI_EPPP_PIN_SCLK;
     config.spi.cs   = CONFIG_SPI_EPPP_PIN_CS;
     config.spi.intr = CONFIG_SPI_EPPP_PIN_INT;
+    config.task.run_task = false;
 
-    ESP_LOGI(TAG, "Starting EPPP SPI slave, waiting for host...");
-    esp_netif_t *eppp_netif = eppp_listen(&config);
+    ESP_LOGI(TAG, "Starting EPPP SPI slave...");
+    esp_netif_t *eppp_netif = eppp_init(EPPP_SERVER, &config);
     if (eppp_netif == NULL)
     {
-        ESP_LOGE(TAG, "EPPP listen failed");
+        ESP_LOGE(TAG, "EPPP init failed");
         return;
     }
+    eppp_netif_start(eppp_netif);
+    xTaskCreate(eppp_perform_task, "eppp", 4096, eppp_netif, 5, NULL);
 
     /* Enable NAT so host can reach the internet */
-    ESP_ERROR_CHECK(esp_netif_napt_enable(eppp_netif));
-    ESP_LOGI(TAG, "EPPP link up, NAT enabled");
+    esp_err_t nat_err = esp_netif_napt_enable(eppp_netif);
+    if (nat_err != ESP_OK)
+        ESP_LOGW(TAG, "NAPT enable failed: %s", esp_err_to_name(nat_err));
+    else
+        ESP_LOGI(TAG, "EPPP SPI slave started, NAT enabled");
 
     /* Start periodic status task */
     xTaskCreate(eppp_server_status_task, "eppp_srv_status", 3072, eppp_netif, 1, NULL);
