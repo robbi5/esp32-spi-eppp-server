@@ -1,0 +1,44 @@
+menu "SPI EPPP Server Configuration"
+
+    config EPPP_SRV_WIFI_SSID
+        string "WiFi SSID"
+        default ""
+        help
+            SSID of the WiFi network the EPPP server connects to.
+
+    config EPPP_SRV_WIFI_PASSWORD
+        string "WiFi Password"
+        default ""
+        help
+            Password of the WiFi network.
+
+    config EPPP_SRV_LED_GPIO
+        int "Status LED GPIO (low-active, -1 to disable)"
+        default 8
+        help
+            GPIO pin for the status LED. The LED is driven low-active
+            (GPIO LOW = LED on). Set to -1 to disable.
+
+    menu "SPI pin configuration"
+        config SPI_EPPP_PIN_MOSI
+            int "MOSI GPIO"
+            default 6
+
+        config SPI_EPPP_PIN_MISO
+            int "MISO GPIO"
+            default 5
+
+        config SPI_EPPP_PIN_SCLK
+            int "SCLK GPIO"
+            default 4
+
+        config SPI_EPPP_PIN_CS
+            int "CS GPIO"
+            default 7
+
+        config SPI_EPPP_PIN_INT
+            int "Handshake/INT GPIO"
+            default 10
+    endmenu
+
+endmenu
