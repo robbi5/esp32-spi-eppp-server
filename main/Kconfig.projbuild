@@ -19,6 +19,39 @@ menu "SPI EPPP Server Configuration"
             GPIO pin for the status LED. The LED is driven low-active
             (GPIO LOW = LED on). Set to -1 to disable.
 
+    menu "TCP port forwarding"
+        config EPPP_SRV_TCP_PROXY_ENABLE
+            bool "Enable TCP port forwarding to EPPP client"
+            default y
+            help
+                Listen for incoming TCP connections and forward them to the
+                EPPP client (the SPI master ESP). Useful to expose a webserver
+                running on the client through the WiFi ESP's IP address.
+
+        config EPPP_SRV_TCP_PROXY_LISTEN_PORT
+            int "Port to listen on (WiFi side)"
+            default 80
+            depends on EPPP_SRV_TCP_PROXY_ENABLE
+            help
+                TCP port to listen on. Incoming connections will be forwarded
+                to the EPPP client at the configured target port.
+
+        config EPPP_SRV_TCP_PROXY_TARGET_IP
+            string "EPPP client IP address"
+            default "192.168.11.2"
+            depends on EPPP_SRV_TCP_PROXY_ENABLE
+            help
+                IP address of the EPPP client (SPI master). Must match
+                EPPP_DEFAULT_CLIENT_IP on the client side (default: 192.168.11.2).
+
+        config EPPP_SRV_TCP_PROXY_TARGET_PORT
+            int "Target port on EPPP client"
+            default 80
+            depends on EPPP_SRV_TCP_PROXY_ENABLE
+            help
+                TCP port of the service running on the EPPP client.
+    endmenu
+
     menu "SPI pin configuration"
         config SPI_EPPP_PIN_MOSI
             int "MOSI GPIO"

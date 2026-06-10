@@ -34,6 +34,16 @@ idf.py -p /dev/ttyUSB0 flash monitor
 
 All settings are available via `idf.py menuconfig`:
 
+
+| Setting | Kconfig key | Default | Description |
+|---------|-------------|---------|-------------|
+| WiFi SSID | `EPPP_SRV_WIFI_SSID` | *(empty)* | SSID of the WiFi network to join |
+| WiFi Password | `EPPP_SRV_WIFI_PASSWORD` | *(empty)* | WiFi password |
+
+Pin defaults are for ESP32-C3. Adjust for your board via menuconfig.
+
+### For ESP32-C3:
+
 | Setting | Kconfig key | Default | Description |
 |---------|-------------|---------|-------------|
 | WiFi SSID | `EPPP_SRV_WIFI_SSID` | *(empty)* | SSID of the WiFi network to join |
