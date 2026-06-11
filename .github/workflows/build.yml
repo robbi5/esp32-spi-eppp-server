@@ -1,0 +1,87 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: esp32c3
+            sdkconfig: sdkconfig.defaults
+          - target: esp32s3
+            sdkconfig: sdkconfig.eps32s3
+          - target: esp32s2
+            sdkconfig: sdkconfig.esp32s2
+    container:
+      image: espressif/idf:release-v6.0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Build with ESP-IDF
+        shell: bash
+        run: |
+          . $IDF_PATH/export.sh
+          if [ "${{ matrix.target }}" == "esp32c3" ]; then
+            # C3 uses sdkconfig.defaults and the target is already set there
+            idf.py set-target esp32c3
+          else
+            # For other targets, use the specific sdkconfig file
+            cp ${{ matrix.sdkconfig }} sdkconfig
+            idf.py set-target ${{ matrix.target }}
+            # Re-apply config to ensure it's used correctly
+            cp ${{ matrix.sdkconfig }} sdkconfig
+          fi
+          idf.py build
+          # Generate a single merged binary for easy flashing at 0x0
+          idf.py merge-bin
+
+      - name: Prepare Artifacts
+        shell: bash
+        run: |
+          mkdir -p artifacts
+          cp build/esp32-spi-eppp-server.bin artifacts/esp32-spi-eppp-server-${{ matrix.target }}.bin
+          # The merged binary is usually named merged-binary.bin in the build directory
+          if [ -f build/merged-binary.bin ]; then
+            cp build/merged-binary.bin artifacts/esp32-spi-eppp-server-${{ matrix.target }}-merged.bin
+          fi
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.target }}
+          path: artifacts/*
+
+  release:
+    name: Create Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-binaries
+          merge-multiple: true
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: all-binaries/*
+          generate_release_notes: true
