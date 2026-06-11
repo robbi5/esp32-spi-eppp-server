@@ -8,6 +8,10 @@ idf_component_register(
         esp_wifi
         esp_netif
         nvs_flash
+        console
+        esp_http_server
+        tuanpmt__esp_bus
+        tuanpmt__esp_wifi_manager
     INCLUDE_DIRS
         "."
 )

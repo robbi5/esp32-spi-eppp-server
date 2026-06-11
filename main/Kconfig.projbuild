@@ -1,17 +1,5 @@
 menu "SPI EPPP Server Configuration"
 
-    config EPPP_SRV_WIFI_SSID
-        string "WiFi SSID"
-        default ""
-        help
-            SSID of the WiFi network the EPPP server connects to.
-
-    config EPPP_SRV_WIFI_PASSWORD
-        string "WiFi Password"
-        default ""
-        help
-            Password of the WiFi network.
-
     config EPPP_SRV_LED_GPIO
         int "Status LED GPIO (low-active, -1 to disable)"
         default 8

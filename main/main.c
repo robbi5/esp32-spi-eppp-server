@@ -17,69 +17,31 @@
 #include "lwip/netdb.h"
 
 #include "eppp_link.h"
+#include "esp_wifi_manager.h"
+#include "esp_bus.h"
+#include "esp_console.h"
+#include "esp_http_server.h"
 
 static const char TAG[] = "EPPP_SRV";
 
-static EventGroupHandle_t s_wifi_event_group;
-#define WIFI_CONNECTED_BIT BIT0
-
-static void wifi_event_handler(void *arg, esp_event_base_t event_base,
-                                int32_t event_id, void *event_data)
+static void init_console(void)
 {
-    if (event_base == WIFI_EVENT)
-    {
-        switch (event_id)
-        {
-        case WIFI_EVENT_STA_START:
-            esp_wifi_connect();
-            break;
-        case WIFI_EVENT_STA_DISCONNECTED:
-            ESP_LOGW(TAG, "WiFi disconnected, reconnecting...");
-            esp_wifi_connect();
-            break;
-        }
-    }
-    else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
-    {
-        ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
-        ESP_LOGI(TAG, "WiFi got IP: " IPSTR, IP2STR(&event->ip_info.ip));
-        xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
-    }
-}
+    esp_console_repl_t *repl = NULL;
+    esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
+    repl_config.prompt = "eppp>";
+    repl_config.max_cmdline_length = 256;
+    esp_console_register_help_command();
 
-static void wifi_init_sta(void)
-{
-    s_wifi_event_group = xEventGroupCreate();
+#if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
+    esp_console_dev_usb_serial_jtag_config_t hw_config =
+        ESP_CONSOLE_DEV_USB_SERIAL_JTAG_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_console_new_repl_usb_serial_jtag(&hw_config, &repl_config, &repl));
+#elif CONFIG_ESP_CONSOLE_UART
+    esp_console_dev_uart_config_t hw_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_console_new_repl_uart(&hw_config, &repl_config, &repl));
+#endif
 
-    ESP_ERROR_CHECK(esp_netif_init());
-    esp_netif_create_default_wifi_sta();
-
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
-                                                wifi_event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
-                                                wifi_event_handler, NULL));
-
-    wifi_config_t wifi_config = {
-        .sta = {
-            .ssid = CONFIG_EPPP_SRV_WIFI_SSID,
-            .password = CONFIG_EPPP_SRV_WIFI_PASSWORD,
-        },
-    };
-
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-    ESP_ERROR_CHECK(esp_wifi_start());
-
-    ESP_LOGI(TAG, "Connecting to WiFi SSID: %s", CONFIG_EPPP_SRV_WIFI_SSID);
-
-    /* Block until WiFi is connected */
-    xEventGroupWaitBits(s_wifi_event_group, WIFI_CONNECTED_BIT,
-                        pdFALSE, pdFALSE, portMAX_DELAY);
-
-    ESP_LOGI(TAG, "WiFi connected");
+    ESP_ERROR_CHECK(esp_console_start_repl(repl));
 }
 
 static void eppp_perform_task(void *arg)
@@ -258,6 +220,7 @@ static void tcp_proxy_task(void *arg)
         }
     }
 }
+
 #endif /* CONFIG_EPPP_SRV_TCP_PROXY_ENABLE */
 
 void app_main(void)
@@ -272,6 +235,7 @@ void app_main(void)
     ESP_ERROR_CHECK(ret);
 
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+    /* Note: esp_netif_init() and WiFi init are handled internally by wifi_manager */
 
 #if CONFIG_EPPP_SRV_LED_GPIO >= 0
     /* Configure status LED (low-active): start with LED off (HIGH) */
@@ -283,8 +247,35 @@ void app_main(void)
     gpio_set_level(CONFIG_EPPP_SRV_LED_GPIO, 1);
 #endif
 
-    /* Connect to WiFi first */
-    wifi_init_sta();
+    /* Start WiFi manager — connects from NVS credentials or opens captive portal */
+    esp_bus_init();
+    wifi_manager_init(&(wifi_manager_config_t){
+        .enable_captive_portal = true,
+        .stop_ap_on_connect    = true,
+        .http = {
+            .enable        = true,
+            .api_base_path = "/api/wifi",
+        },
+    });
+    ESP_LOGI(TAG, "WiFi manager started");
+
+    /* Start console REPL for WiFi CLI commands */
+    init_console();
+
+    /* Wait until WiFi is up before starting EPPP */
+    ESP_LOGI(TAG, "Waiting for WiFi connection...");
+    wifi_manager_wait_connected(0);
+    ESP_LOGI(TAG, "WiFi connected, starting EPPP SPI slave...");
+
+#if CONFIG_EPPP_SRV_TCP_PROXY_ENABLE
+    /* Stop the wifi_manager HTTP server so port 80 is free for the TCP proxy */
+    httpd_handle_t wm_httpd = wifi_manager_get_httpd();
+    if (wm_httpd) {
+        httpd_stop(wm_httpd);
+        ESP_LOGI(TAG, "WiFi manager HTTP server stopped, handing port %d to TCP proxy",
+                 CONFIG_EPPP_SRV_TCP_PROXY_LISTEN_PORT);
+    }
+#endif
 
     /* Start EPPP server (SPI slave), non-blocking */
     eppp_config_t config = EPPP_DEFAULT_SERVER_CONFIG();
