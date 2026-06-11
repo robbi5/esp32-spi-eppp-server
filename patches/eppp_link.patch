@@ -1,0 +1,11 @@
+--- a/managed_components/espressif__eppp_link/eppp_spi.c
++++ b/managed_components/espressif__eppp_link/eppp_spi.c
+@@ -376,7 +376,7 @@
+     next_tx_size = head->next_size = h->outbound.len;
+     head->magic = SPI_HEADER_MAGIC;
+     head->check = esp_rom_crc16_le(0, out_buf, sizeof(struct header) - sizeof(uint16_t));
+-    esp_err_t ret = perform_transaction(h, sizeof(struct header) + h->transaction_size, out_buf, in_buf);
++    esp_err_t ret = perform_transaction(h, SPI_ALIGN(sizeof(struct header) + h->transaction_size), out_buf, in_buf);
+     if (ret != ESP_OK) {
+         ESP_LOGE(TAG, "spi_device_transmit failed");
+         h->transaction_size = 0; // need to start with HEADER only transaction

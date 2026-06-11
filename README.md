@@ -22,6 +22,7 @@ tunnel. Any ESP32 with SPI can serve as the host; it only needs to call
 Requires [ESP-IDF](https://github.com/espressif/esp-idf) v6.0 or later.
 
 ```sh
+./apply_patches.sh
 idf.py build
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
@@ -95,7 +96,7 @@ The checked-in `sdkconfig.defaults` sets only the essentials:
 - VJ header compression disabled (not needed for local SPI link)
 
 Pin assignments are **not** in `sdkconfig.defaults`
-and must be configured via `idf.py menuconfig`.
+and must be configured via `idf.py menuconfig` (or use one of the provided sdkconfig.esp32* files)
 
 ## Thanks
 

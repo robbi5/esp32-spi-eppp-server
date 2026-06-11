@@ -1,0 +1,10 @@
+--- a/managed_components/tuanpmt__esp_wifi_manager/CMakeLists.txt
++++ b/managed_components/tuanpmt__esp_wifi_manager/CMakeLists.txt
+@@ -10,7 +10,7 @@
+
+ set(PRIV_REQUIRES
+     esp_bus
+-    json
++    espressif__cjson
+     mbedtls
+ )

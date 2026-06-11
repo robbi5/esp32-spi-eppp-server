@@ -21,7 +21,7 @@ jobs:
           - target: esp32c3
             sdkconfig: sdkconfig.defaults
           - target: esp32s3
-            sdkconfig: sdkconfig.eps32s3
+            sdkconfig: sdkconfig.esp32s3
           - target: esp32s2
             sdkconfig: sdkconfig.esp32s2
     container:
@@ -35,7 +35,14 @@ jobs:
       - name: Build with ESP-IDF
         shell: bash
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          
+          # Initialize esp-idf
           . $IDF_PATH/export.sh
+          
+          # Apply compatibility patches for ESP-IDF 6.x
+          ./apply_patches.sh
+
           if [ "${{ matrix.target }}" == "esp32c3" ]; then
             # C3 uses sdkconfig.defaults and the target is already set there
             idf.py set-target esp32c3

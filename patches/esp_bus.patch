@@ -1,0 +1,10 @@
+--- a/managed_components/tuanpmt__esp_bus/CMakeLists.txt
++++ b/managed_components/tuanpmt__esp_bus/CMakeLists.txt
+@@ -10,6 +10,6 @@
+         src
+     REQUIRES
+         freertos
+-        driver
++        esp_driver_gpio
+         esp_timer
+ )
