@@ -43,23 +43,23 @@ menu "SPI EPPP Server Configuration"
     menu "SPI pin configuration"
         config SPI_EPPP_PIN_MOSI
             int "MOSI GPIO"
-            default 6
+            default 7
 
         config SPI_EPPP_PIN_MISO
             int "MISO GPIO"
-            default 5
+            default 2
 
         config SPI_EPPP_PIN_SCLK
             int "SCLK GPIO"
-            default 4
+            default 6
 
         config SPI_EPPP_PIN_CS
             int "CS GPIO"
-            default 7
+            default 10
 
         config SPI_EPPP_PIN_INT
             int "Handshake/INT GPIO"
-            default 10
+            default 9
     endmenu
 
 endmenu

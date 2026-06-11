@@ -50,18 +50,32 @@ The AP name and other WiFi manager settings can be tuned via `idf.py menuconfig`
 
 ### For ESP32-C3:
 
+https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/peripherals/spi_master.html#gpio-matrix-and-io-mux
+
 | Setting | Kconfig key | Default | Description |
 |---------|-------------|---------|-------------|
-| WiFi SSID | `EPPP_SRV_WIFI_SSID` | *(empty)* | SSID of the WiFi network to join |
-| WiFi Password | `EPPP_SRV_WIFI_PASSWORD` | *(empty)* | WiFi password |
 | Status LED | `EPPP_SRV_LED_GPIO` | 8 | Status LED GPIO, low-active (-1 to disable) |
-| MOSI GPIO | `SPI_EPPP_PIN_MOSI` | 6 | SPI MOSI pin |
-| MISO GPIO | `SPI_EPPP_PIN_MISO` | 5 | SPI MISO pin |
-| SCLK GPIO | `SPI_EPPP_PIN_SCLK` | 4 | SPI clock pin |
-| CS GPIO | `SPI_EPPP_PIN_CS` | 7 | SPI chip select pin |
-| INT GPIO | `SPI_EPPP_PIN_INT` | 10 | SPI handshake/interrupt pin |
+| MOSI GPIO | `SPI_EPPP_PIN_MOSI` | 7 | SPI MOSI pin |
+| MISO GPIO | `SPI_EPPP_PIN_MISO` | 2 | SPI MISO pin |
+| SCLK GPIO | `SPI_EPPP_PIN_SCLK` | 6 | SPI clock pin |
+| CS GPIO | `SPI_EPPP_PIN_CS` | 10 | SPI chip select pin |
+| INT GPIO | `SPI_EPPP_PIN_INT` | 9 | SPI handshake/interrupt pin |
 
 Pin defaults are for ESP32-C3. Adjust for your board via menuconfig.
+
+### For ESP32-S3 or ESP32-S2:
+
+https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/spi_master.html#gpio-matrix-and-io-mux or https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/api-reference/peripherals/spi_master.html#gpio-matrix-and-io-mux
+
+| Setting | Kconfig key | Default | Description |
+|---------|-------------|---------|-------------|
+| Status LED | `EPPP_SRV_LED_GPIO` | 8 | Status LED GPIO, low-active (-1 to disable) |
+| MOSI GPIO | `SPI_EPPP_PIN_MOSI` | 11 | SPI MOSI pin |
+| MISO GPIO | `SPI_EPPP_PIN_MISO` | 13 | SPI MISO pin |
+| SCLK GPIO | `SPI_EPPP_PIN_SCLK` | 12 | SPI clock pin |
+| CS GPIO | `SPI_EPPP_PIN_CS` | 10 | SPI chip select pin |
+| INT GPIO | `SPI_EPPP_PIN_INT` | 9 | SPI handshake/interrupt pin |
+
 
 ## Serial output
 
