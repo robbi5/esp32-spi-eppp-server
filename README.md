@@ -17,9 +17,16 @@ tunnel. Any ESP32 with SPI can serve as the host; it only needs to call
 3. Once connected, an IP tunnel is established over SPI and traffic is
    forwarded between the EPPP interface and WiFi using lwIP NAT (NAPT).
 
-## Building
+## Download Release & Flash
+
+Use https://esptool.spacehuhn.com (or any other esp web-usb flashing tool) and flash one of the matching `-merged.bin` for your esp32 [from the releases of this repository](https://github.com/robbi5/esp32-spi-eppp-server/releases/).
+
+## Building it manually
 
 Requires [ESP-IDF](https://github.com/espressif/esp-idf) v6.0 or later.
+
+As some of the dependencies need to be patched (eppp-link for `SPI_ALIGN`ment, esp_bus and esp_wifi_manager 
+for ESP-IDF 6.x compatibility), there is the `patches/` folder and the `apply_patches.sh` that downloads the dependencies and patches them.
 
 ```sh
 ./apply_patches.sh
@@ -27,9 +34,9 @@ idf.py build
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
 
-On first boot, connect to the `ESP32-Config` SoftAP and enter your WiFi credentials in the captive portal.
-
 ## Configuration
+
+On first boot, connect to the `ESP32-Config` SoftAP and enter your WiFi credentials in the captive portal.
 
 All settings are available via `idf.py menuconfig`:
 
