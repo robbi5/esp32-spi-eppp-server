@@ -43,6 +43,8 @@ jobs:
           # Apply compatibility patches for ESP-IDF 6.x
           ./apply_patches.sh
 
+          rm -rf build/
+
           if [ "${{ matrix.target }}" == "esp32c3" ]; then
             # C3 uses sdkconfig.defaults and the target is already set there
             idf.py set-target esp32c3
