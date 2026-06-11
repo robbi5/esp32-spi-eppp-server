@@ -12,7 +12,7 @@ tunnel. Any ESP32 with SPI can serve as the host; it only needs to call
 
 ## How it works
 
-1. The server connects to a WiFi access point as a station.
+1. The server starts a WiFi manager. On first boot (or when saved credentials are erased), it opens a SoftAP captive portal (`ESP32-Config` by default) so you can enter WiFi credentials via a browser. Credentials are stored in NVS and reused on subsequent boots.
 2. It starts an EPPP SPI slave and waits for a host (SPI master) to connect.
 3. Once connected, an IP tunnel is established over SPI and traffic is
    forwarded between the EPPP interface and WiFi using lwIP NAT (NAPT).
@@ -22,25 +22,31 @@ tunnel. Any ESP32 with SPI can serve as the host; it only needs to call
 Requires [ESP-IDF](https://github.com/espressif/esp-idf) v6.0 or later.
 
 ```sh
-# Set WiFi credentials (stored in sdkconfig, not in sdkconfig.defaults)
-idf.py menuconfig
-# → SPI EPPP Server Configuration → WiFi SSID / WiFi Password
-
 idf.py build
 idf.py -p /dev/ttyUSB0 flash monitor
 ```
+
+On first boot, connect to the `ESP32-Config` SoftAP and enter your WiFi credentials in the captive portal.
 
 ## Configuration
 
 All settings are available via `idf.py menuconfig`:
 
+### WiFi
 
-| Setting | Kconfig key | Default | Description |
-|---------|-------------|---------|-------------|
-| WiFi SSID | `EPPP_SRV_WIFI_SSID` | *(empty)* | SSID of the WiFi network to join |
-| WiFi Password | `EPPP_SRV_WIFI_PASSWORD` | *(empty)* | WiFi password |
+WiFi credentials are configured at runtime via the captive portal. On first boot the device opens a SoftAP named `ESP32-Config` (open network, no password). Connect to it and your OS will redirect you to the portal where you can scan for and enter your WiFi credentials - if not, try <http://192.168.4.1>. They are saved to NVS and used automatically on subsequent boots.
 
-Pin defaults are for ESP32-C3. Adjust for your board via menuconfig.
+To switch networks later, use the serial CLI (visible in `idf.py monitor`):
+
+```
+eppp> wifi_list              # show saved networks
+eppp> wifi_add MyNewSSID password123
+eppp> wifi_del OldSSID
+eppp> wifi_connect           # reconnect with highest-priority network
+eppp> wifi_reset             # clear all saved networks (triggers captive portal on reboot)
+```
+
+The AP name and other WiFi manager settings can be tuned via `idf.py menuconfig` → *WiFi Manager*.
 
 ### For ESP32-C3:
 
@@ -74,5 +80,9 @@ The checked-in `sdkconfig.defaults` sets only the essentials:
 - IP forwarding and NAPT enabled
 - VJ header compression disabled (not needed for local SPI link)
 
-WiFi credentials and pin assignments are **not** in `sdkconfig.defaults`
+Pin assignments are **not** in `sdkconfig.defaults`
 and must be configured via `idf.py menuconfig`.
+
+## Thanks
+
+This project is based on https://github.com/hn/esp32-spi-eppp-server
