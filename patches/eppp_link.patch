@@ -1,11 +1,87 @@
+diff --git a/managed_components/espressif__eppp_link/include/eppp_link.h b/managed_components/espressif__eppp_link/include/eppp_link.h
+index eb6e18f..83bc72a 100644
+--- a/managed_components/espressif__eppp_link/include/eppp_link.h
++++ b/managed_components/espressif__eppp_link/include/eppp_link.h
+@@ -194,6 +194,8 @@
+ 
+ void eppp_deinit(esp_netif_t *netif);
+ 
++esp_err_t eppp_get_stats(esp_netif_t *netif, uint32_t *tx_packets, uint32_t *rx_packets, uint32_t *err_packets);
++
+ esp_netif_t *eppp_open(eppp_type_t role, eppp_config_t *config, int connect_timeout_ms);
+ 
+ esp_netif_t *eppp_netif_init(eppp_type_t role, eppp_transport_handle_t h, eppp_config_t *eppp_config);
+diff --git a/managed_components/espressif__eppp_link/eppp_transport.h b/managed_components/espressif__eppp_link/eppp_transport.h
+index e7f25ef..94ab7c1 100644
+--- a/managed_components/espressif__eppp_link/eppp_transport.h
++++ b/managed_components/espressif__eppp_link/eppp_transport.h
+@@ -19,6 +19,9 @@
+     bool stop;
+     bool exited;
+     bool netif_stop;
++    uint32_t tx_packets;
++    uint32_t rx_packets;
++    uint32_t err_packets;
+ #ifdef CONFIG_EPPP_LINK_CHANNELS_SUPPORT
+     eppp_channel_fn_t channel_tx;
+     eppp_channel_fn_t channel_rx;
+diff --git a/managed_components/espressif__eppp_link/eppp_link.c b/managed_components/espressif__eppp_link/eppp_link.c
+index a3dfde3..eb36ff1 100644
+--- a/managed_components/espressif__eppp_link/eppp_link.c
++++ b/managed_components/espressif__eppp_link/eppp_link.c
+@@ -369,4 +369,19 @@
+     return h->context;
+ }
+ #endif
++
++esp_err_t eppp_get_stats(esp_netif_t *netif, uint32_t *tx_packets, uint32_t *rx_packets, uint32_t *err_packets)
++{
++    if (netif == NULL) {
++        return ESP_ERR_INVALID_ARG;
++    }
++    struct eppp_handle *h = esp_netif_get_io_driver(netif);
++    if (h == NULL) {
++        return ESP_ERR_INVALID_STATE;
++    }
++    if (tx_packets) *tx_packets = h->tx_packets;
++    if (rx_packets) *rx_packets = h->rx_packets;
++    if (err_packets) *err_packets = h->err_packets;
++    return ESP_OK;
++}
+diff --git a/managed_components/espressif__eppp_link/eppp_spi.c b/managed_components/espressif__eppp_link/eppp_spi.c
+index c54ae52..9b09ef3 100644
 --- a/managed_components/espressif__eppp_link/eppp_spi.c
 +++ b/managed_components/espressif__eppp_link/eppp_spi.c
-@@ -376,7 +376,7 @@
+@@ -72,5 +72,6 @@
+ static esp_err_t transmit_generic(struct eppp_spi *handle, int channel, void *buffer, size_t len)
+ {
+-
++    handle->parent.tx_packets++;
+     struct packet buf = { .channel = channel };
+     uint8_t *current_buffer = buffer;
+     size_t remaining = len;
+@@ -376,11 +380,12 @@
      next_tx_size = head->next_size = h->outbound.len;
      head->magic = SPI_HEADER_MAGIC;
      head->check = esp_rom_crc16_le(0, out_buf, sizeof(struct header) - sizeof(uint16_t));
 -    esp_err_t ret = perform_transaction(h, sizeof(struct header) + h->transaction_size, out_buf, in_buf);
 +    esp_err_t ret = perform_transaction(h, SPI_ALIGN(sizeof(struct header) + h->transaction_size), out_buf, in_buf);
      if (ret != ESP_OK) {
++        h->parent.err_packets++;
          ESP_LOGE(TAG, "spi_device_transmit failed");
          h->transaction_size = 0; // need to start with HEADER only transaction
+         return ESP_FAIL;
+     }
+     head = (void *)in_buf;
+     uint16_t check = esp_rom_crc16_le(0, in_buf, sizeof(struct header) - sizeof(uint16_t));
+@@ -391,6 +395,7 @@
+         if (allow_test_tx) {
+             return ESP_OK;
+         }
++        h->parent.err_packets++;
+         ESP_LOGE(TAG, "Wrong checksum, magic, or channel: %x %x %x", check, head->magic, head->channel);
+         return ESP_FAIL;
+     }
+     if (head->size > 0) {
++        h->parent.rx_packets++;
+         ESP_LOG_BUFFER_HEXDUMP(TAG, in_buf + sizeof(struct header), head->size, ESP_LOG_VERBOSE);

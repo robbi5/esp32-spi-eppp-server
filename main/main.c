@@ -112,12 +112,18 @@ static void eppp_server_status_task(void *arg)
         if (sta_netif)
             esp_netif_get_ip_info(sta_netif, &ip_info);
 
-        ESP_LOGI(TAG, "[up=%lus] eppp=%s wifi=%ddBm ip=" IPSTR " heap=%lu",
+        uint32_t tx = 0, rx = 0, err = 0;
+        eppp_get_stats(eppp_netif, &tx, &rx, &err);
+
+        ESP_LOGI(TAG, "[up=%lus] eppp=%s wifi=%ddBm ip=" IPSTR " heap=%lu packets_tx=%lu packets_rx=%lu packets_err=%lu",
                  uptime,
                  eppp_up ? "UP" : "DOWN",
                  rssi,
                  IP2STR(&ip_info.ip),
-                 heap);
+                 heap,
+                 tx,
+                 rx,
+                 err);
     }
 }
 

@@ -88,7 +88,7 @@ https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peri
 The firmware logs a periodic status line (every 10 s):
 
 ```
-I (36938) EPPP_SRV: [up=36s] eppp=UP wifi=-60dBm ip=192.168.42.123 heap=189184
+I (36938) EPPP_SRV: [up=36s] eppp=UP wifi=-60dBm ip=192.168.42.123 heap=189184 packets_tx=123 packets_rx=456 packets_err=0
 ```
 
 ## sdkconfig.defaults
