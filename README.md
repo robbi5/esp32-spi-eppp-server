@@ -1,6 +1,6 @@
 # ESP32 SPI EPPP Server
 
-An ESP-IDF firmware that turns an ESP32 (e.g. ESP32-C3) into a WiFi-to-SPI
+An ESP-IDF firmware that turns an ESP32 (such as an ESP32-C3, ESP32-S3 or ESP32-S2) into a WiFi-to-SPI
 gateway using Espressif's
 [EPPP Link](https://components.espressif.com/components/espressif/eppp_link)
 component.
@@ -10,10 +10,11 @@ The device acts as an SPI gateway and EPPP server — it waits for an SPI client
 
 ## How it works
 
-1. The server starts a WiFi manager. On first boot (or when saved credentials are erased), it opens a SoftAP captive portal (`ESP32-Config` by default) so you can enter WiFi credentials via a browser. Credentials are stored in NVS and reused on subsequent boots.
-2. It starts an EPPP SPI gateway and waits for an SPI client to connect.
-3. Once connected, an IP tunnel is established over SPI and traffic is
-   forwarded between the EPPP interface and WiFi using lwIP NAT (NAPT).
+When the ESP32 boots, it tries to connect to your WiFi network. If it doesn't have credentials saved (or if they are incorrect), it starts an open AP called `ESP32-Config` and runs a captive portal on port 80 so you can configure them from a browser.
+
+Once connected to WiFi, it starts the SPI transport and waits for the client. When the client connects, the devices establish a point-to-point IP link. The gateway then forwards the client's traffic to the WiFi network using lwIP's NAPT.
+
+By default, the gateway also runs a port-forwarding proxy. It listens on port 80 on the WiFi side and forwards incoming connections across the SPI link to the client. When the SPI link goes up, the gateway automatically shuts down its WiFi config web server to release port 80 for the proxy.
 
 ## Download Release & Flash
 
@@ -54,7 +55,21 @@ eppp> wifi_reset             # clear all saved networks (triggers captive portal
 
 The AP name and other WiFi manager settings can be tuned via `idf.py menuconfig` → *WiFi Manager*.
 
-### For ESP32-C3:
+### Port forwarding
+
+To make it easy to access a http server running on the SPI client from the WiFi network, the gateway includes a built-in TCP port forwarding proxy (enabled via `CONFIG_EPPP_SRV_TCP_PROXY_ENABLE=y` by default).
+
+All settings can be configured via `idf.py menuconfig` -> *SPI EPPP Server Configuration* -> *TCP port forwarding*:
+
+| Setting | Kconfig key | Default | Description |
+|---------|-------------|---------|-------------|
+| Enable Proxy | `EPPP_SRV_TCP_PROXY_ENABLE` | `y` | Enable TCP port forwarding to EPPP client |
+| Listen Port | `EPPP_SRV_TCP_PROXY_LISTEN_PORT` | `80` | Port to listen on (WiFi side) |
+| Client IP | `EPPP_SRV_TCP_PROXY_TARGET_IP` | `"192.168.11.2"` | IP address of the EPPP client |
+| Target Port | `EPPP_SRV_TCP_PROXY_TARGET_PORT` | `80` | Target port on EPPP client |
+
+
+### Pin configuration for ESP32-C3:
 
 https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/peripherals/spi_master.html#gpio-matrix-and-io-mux
 
@@ -69,7 +84,7 @@ https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/peri
 
 Pin defaults are for ESP32-C3. Adjust for your board via menuconfig.
 
-### For ESP32-S3 or ESP32-S2:
+### Pin configuration for ESP32-S3 or ESP32-S2:
 
 https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/spi_master.html#gpio-matrix-and-io-mux or https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/api-reference/peripherals/spi_master.html#gpio-matrix-and-io-mux
 
