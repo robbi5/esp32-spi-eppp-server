@@ -206,8 +206,10 @@ static void tcp_proxy_task(void *arg)
         struct sockaddr_in client_addr;
         socklen_t addr_len = sizeof(client_addr);
         int client_fd = accept(listen_fd, (struct sockaddr *)&client_addr, &addr_len);
-        if (client_fd < 0)
+        if (client_fd < 0) {
+            vTaskDelay(pdMS_TO_TICKS(100)); // prevent tight loop on accept failure
             continue;
+        }
 
         proxy_conn_t *conn = malloc(sizeof(proxy_conn_t));
         if (!conn) {
@@ -267,7 +269,8 @@ void app_main(void)
 
     /* Wait until WiFi is up before starting EPPP */
     ESP_LOGI(TAG, "Waiting for WiFi connection...");
-    wifi_manager_wait_connected(0);
+    while (wifi_manager_wait_connected(portMAX_DELAY) != ESP_OK) {
+    }
     ESP_LOGI(TAG, "WiFi connected, starting EPPP SPI slave...");
 
 #if CONFIG_EPPP_SRV_TCP_PROXY_ENABLE
