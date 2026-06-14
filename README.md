@@ -5,15 +5,13 @@ gateway using Espressif's
 [EPPP Link](https://components.espressif.com/components/espressif/eppp_link)
 component.
 
-The device acts as an SPI slave and EPPP server — it waits for an SPI master
-to connect, then provides that host with NAT-ed IP connectivity over an EPPP
-tunnel. Any ESP32 with SPI can serve as the host; it only needs to call
+The device acts as an SPI gateway and EPPP server — it waits for an SPI client to connect, then provides that client with NAT-ed IP connectivity over an EPPP tunnel. Any ESP32 with SPI can serve as the client; it only needs to call
 `eppp_connect()` to obtain a fully functional network interface.
 
 ## How it works
 
 1. The server starts a WiFi manager. On first boot (or when saved credentials are erased), it opens a SoftAP captive portal (`ESP32-Config` by default) so you can enter WiFi credentials via a browser. Credentials are stored in NVS and reused on subsequent boots.
-2. It starts an EPPP SPI slave and waits for a host (SPI master) to connect.
+2. It starts an EPPP SPI gateway and waits for an SPI client to connect.
 3. Once connected, an IP tunnel is established over SPI and traffic is
    forwarded between the EPPP interface and WiFi using lwIP NAT (NAPT).
 

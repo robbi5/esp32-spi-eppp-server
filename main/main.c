@@ -62,7 +62,7 @@ static void eppp_perform_task(void *arg)
             fail_count = 0;
             if (!link_up) {
                 link_up = true;
-                ESP_LOGI(TAG, "EPPP SPI Link Connected (Host is active)");
+                ESP_LOGI(TAG, "EPPP SPI Link Connected (Client is active)");
             }
         } else {
             if (link_up) {
@@ -70,7 +70,7 @@ static void eppp_perform_task(void *arg)
                 // Require a few consecutive failures to declare link down
                 if (fail_count >= 5) {
                     link_up = false;
-                    ESP_LOGW(TAG, "EPPP SPI Link Disconnected (Host is inactive)");
+                    ESP_LOGW(TAG, "EPPP SPI Link Disconnected (Client is inactive)");
                 }
             }
             vTaskDelay(pdMS_TO_TICKS(100)); // prevent tight loop CPU starvation on SPI/driver error
@@ -296,7 +296,7 @@ void app_main(void)
     ESP_LOGI(TAG, "Waiting for WiFi connection...");
     while (wifi_manager_wait_connected(portMAX_DELAY) != ESP_OK) {
     }
-    ESP_LOGI(TAG, "WiFi connected, starting EPPP SPI slave...");
+    ESP_LOGI(TAG, "WiFi connected, starting EPPP SPI gateway...");
 
 #if CONFIG_EPPP_SRV_TCP_PROXY_ENABLE
     /* Stop the wifi_manager HTTP server so port 80 is free for the TCP proxy */
@@ -308,7 +308,7 @@ void app_main(void)
     }
 #endif
 
-    /* Start EPPP server (SPI slave), non-blocking */
+    /* Start EPPP server (SPI gateway), non-blocking */
     eppp_config_t config = EPPP_DEFAULT_SERVER_CONFIG();
     config.transport = EPPP_TRANSPORT_SPI;
     config.spi.is_master = false;
@@ -320,7 +320,7 @@ void app_main(void)
     config.spi.intr = CONFIG_SPI_EPPP_PIN_INT;
     config.task.run_task = false;
 
-    ESP_LOGI(TAG, "Starting EPPP SPI slave...");
+    ESP_LOGI(TAG, "Starting EPPP SPI gateway...");
     esp_netif_t *eppp_netif = eppp_init(EPPP_SERVER, &config);
     if (eppp_netif == NULL)
     {
@@ -330,12 +330,12 @@ void app_main(void)
     eppp_netif_start(eppp_netif);
     xTaskCreate(eppp_perform_task, "eppp", 4096, eppp_netif, 5, NULL);
 
-    /* Enable NAT so host can reach the internet */
+    /* Enable NAT so client can reach the internet */
     esp_err_t nat_err = esp_netif_napt_enable(eppp_netif);
     if (nat_err != ESP_OK)
         ESP_LOGW(TAG, "NAPT enable failed: %s", esp_err_to_name(nat_err));
     else
-        ESP_LOGI(TAG, "EPPP SPI slave started, NAT enabled");
+        ESP_LOGI(TAG, "EPPP SPI gateway started, NAT enabled");
 
     /* Start periodic status task */
     xTaskCreate(eppp_server_status_task, "eppp_srv_status", 3072, eppp_netif, 1, NULL);

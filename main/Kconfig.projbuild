@@ -13,7 +13,7 @@ menu "SPI EPPP Server Configuration"
             default y
             help
                 Listen for incoming TCP connections and forward them to the
-                EPPP client (the SPI master ESP). Useful to expose a webserver
+                EPPP client. Useful to expose a webserver
                 running on the client through the WiFi ESP's IP address.
 
         config EPPP_SRV_TCP_PROXY_LISTEN_PORT
@@ -29,7 +29,7 @@ menu "SPI EPPP Server Configuration"
             default "192.168.11.2"
             depends on EPPP_SRV_TCP_PROXY_ENABLE
             help
-                IP address of the EPPP client (SPI master). Must match
+                IP address of the EPPP client. Must match
                 EPPP_DEFAULT_CLIENT_IP on the client side (default: 192.168.11.2).
 
         config EPPP_SRV_TCP_PROXY_TARGET_PORT
