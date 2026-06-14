@@ -30,6 +30,7 @@ static void init_console(void)
     esp_console_repl_config_t repl_config = ESP_CONSOLE_REPL_CONFIG_DEFAULT();
     repl_config.prompt = "eppp>";
     repl_config.max_cmdline_length = 256;
+    repl_config.task_priority = 6;
     esp_console_register_help_command();
 
 #if CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
