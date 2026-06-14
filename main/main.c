@@ -50,7 +50,32 @@ static void init_console(void)
 static void eppp_perform_task(void *arg)
 {
     esp_netif_t *netif = (esp_netif_t *)arg;
-    while (eppp_perform(netif) != ESP_ERR_TIMEOUT) {}
+    bool link_up = false;
+    int fail_count = 0;
+
+    while (1) {
+        esp_err_t ret = eppp_perform(netif);
+        if (ret == ESP_ERR_TIMEOUT) {
+            break;
+        }
+        if (ret == ESP_OK) {
+            fail_count = 0;
+            if (!link_up) {
+                link_up = true;
+                ESP_LOGI(TAG, "EPPP SPI Link Connected (Host is active)");
+            }
+        } else {
+            if (link_up) {
+                fail_count++;
+                // Require a few consecutive failures to declare link down
+                if (fail_count >= 5) {
+                    link_up = false;
+                    ESP_LOGW(TAG, "EPPP SPI Link Disconnected (Host is inactive)");
+                }
+            }
+            vTaskDelay(pdMS_TO_TICKS(100)); // prevent tight loop CPU starvation on SPI/driver error
+        }
+    }
     vTaskDelete(NULL);
 }
 
