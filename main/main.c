@@ -289,6 +289,7 @@ void app_main(void)
     wifi_manager_init(&(wifi_manager_config_t){
         .enable_captive_portal = true,
         .stop_ap_on_connect    = true,
+        .auto_reconnect        = true,
         .http = {
             .enable        = true,
             .api_base_path = "/api/wifi",
