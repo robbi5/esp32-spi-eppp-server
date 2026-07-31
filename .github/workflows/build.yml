@@ -20,6 +20,8 @@ jobs:
         include:
           - target: esp32c3
             sdkconfig: sdkconfig.defaults
+          - target: esp32c3-xiao
+            sdkconfig: sdkconfig.esp32c3-xiao
           - target: esp32s3
             sdkconfig: sdkconfig.esp32s3
           - target: esp32s2

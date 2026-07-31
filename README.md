@@ -84,6 +84,19 @@ https://docs.espressif.com/projects/esp-idf/en/latest/esp32c3/api-reference/peri
 
 Pin defaults are for ESP32-C3. Adjust for your board via menuconfig.
 
+#### Seeed Studio XIAO ESP32C3:
+
+https://wiki.seeedstudio.com/XIAO_ESP32C3_Getting_Started/#resources and https://files.seeedstudio.com/wiki/XIAO_WiFi/Resources/XIAO-ESP32C3-pinout_sheet.xlsx
+
+| Setting | Kconfig key | Default | Description |
+|---------|-------------|---------|-------------|
+| Status LED | `EPPP_SRV_LED_GPIO` | -1 | Status LED GPIO - disabled |
+| MOSI GPIO | `SPI_EPPP_PIN_MOSI` | 10 | SPI MOSI pin - D10 |
+| MISO GPIO | `SPI_EPPP_PIN_MISO` | 9 | SPI MISO pin - D9 |
+| SCLK GPIO | `SPI_EPPP_PIN_SCLK` | 8 | SPI clock pin - D8 |
+| CS GPIO | `SPI_EPPP_PIN_CS` | 3 | SPI chip select pin - D1 |
+| INT GPIO | `SPI_EPPP_PIN_INT` | 4 | SPI handshake/interrupt pin - D2 |
+
 ### Pin configuration for ESP32-S3 or ESP32-S2:
 
 https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/spi_master.html#gpio-matrix-and-io-mux or https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/api-reference/peripherals/spi_master.html#gpio-matrix-and-io-mux
