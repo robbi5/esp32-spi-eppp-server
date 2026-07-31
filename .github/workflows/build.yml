@@ -12,19 +12,23 @@ on:
 
 jobs:
   build:
-    name: Build ${{ matrix.target }}
+    name: Build ${{ matrix.name }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
           - target: esp32c3
+            name: esp32c3
             sdkconfig: sdkconfig.defaults
-          - target: esp32c3-xiao
+          - target: esp32c3
+            name: esp32c3-xiao
             sdkconfig: sdkconfig.esp32c3-xiao
           - target: esp32s3
+            name: esp32s3
             sdkconfig: sdkconfig.esp32s3
           - target: esp32s2
+            name: esp32s2
             sdkconfig: sdkconfig.esp32s2
     container:
       image: espressif/idf:release-v6.0
@@ -65,16 +69,16 @@ jobs:
         shell: bash
         run: |
           mkdir -p artifacts
-          cp build/esp32-spi-eppp-server.bin artifacts/esp32-spi-eppp-server-${{ matrix.target }}.bin
+          cp build/esp32-spi-eppp-server.bin artifacts/esp32-spi-eppp-server-${{ matrix.name }}.bin
           # The merged binary is usually named merged-binary.bin in the build directory
           if [ -f build/merged-binary.bin ]; then
-            cp build/merged-binary.bin artifacts/esp32-spi-eppp-server-${{ matrix.target }}-merged.bin
+            cp build/merged-binary.bin artifacts/esp32-spi-eppp-server-${{ matrix.name }}-merged.bin
           fi
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: binaries-${{ matrix.target }}
+          name: binaries-${{ matrix.name }}
           path: artifacts/*
 
   release:
