@@ -51,16 +51,11 @@ jobs:
 
           rm -rf build/
 
-          if [ "${{ matrix.target }}" == "esp32c3" ]; then
-            # C3 uses sdkconfig.defaults and the target is already set there
-            idf.py set-target esp32c3
-          else
-            # For other targets, use the specific sdkconfig file
-            cp ${{ matrix.sdkconfig }} sdkconfig
-            idf.py set-target ${{ matrix.target }}
-            # Re-apply config to ensure it's used correctly
-            cp ${{ matrix.sdkconfig }} sdkconfig
-          fi
+          cp ${{ matrix.sdkconfig }} sdkconfig
+          idf.py set-target ${{ matrix.target }}
+          # Re-apply config to ensure it's used correctly
+          cp ${{ matrix.sdkconfig }} sdkconfig
+          
           idf.py build
           # Generate a single merged binary for easy flashing at 0x0
           idf.py merge-bin
